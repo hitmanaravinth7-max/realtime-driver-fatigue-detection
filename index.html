@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Driver Fatigue Detection | Capstone Project</title>
+  <meta name="description" content="College final-year capstone project: Real-Time Driver Fatigue Detection web application utilizing computer vision, facial landmarks (EAR/MAR), deep learning classification, and safety AI assistant.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="dark-theme">
+
+  <!-- EMERGENCY ALERT BANNER -->
+  <div id="emergency-alert" class="emergency-alert hidden">
+    <div class="alert-content">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-text">
+        <h3>FATIGUE DETECTED – PLEASE TAKE A BREAK.</h3>
+        <p id="alert-detail">Prolonged eye closure detected (1.8s). Audible alarm and vibration activated.</p>
+        <span class="alert-timestamp" id="alert-time">Timestamp: --:--:--</span>
+      </div>
+      <button id="btn-dismiss-alert" class="btn btn-danger-action">I am Alert / Dismiss</button>
+    </div>
+  </div>
+
+  <div id="app-container" class="app-container">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="top-nav">
+      <div class="nav-left">
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <div class="brand">
+          <div class="brand-logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div>
+            <span class="brand-title">Driver Fatigue Guard</span>
+            <span class="brand-sub">Real-Time Computer Vision System</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <div id="global-status-pill" class="status-pill status-standby">
+          <span class="pulse-dot"></span>
+          <span id="global-status-text">SYSTEM STANDBY</span>
+        </div>
+        <div class="demo-badge" id="demo-mode-badge" title="Controlled facial simulation for evaluation">
+          DEMO MODE ACTIVE
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <button id="theme-toggle" class="icon-btn" title="Toggle Theme">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="driver-profile-pill" id="nav-profile-pill">
+          <span class="avatar-circle">DR</span>
+          <span class="driver-nav-name" id="nav-driver-name">Scholar Driver</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-body">
+
+      <!-- SIDEBAR -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-category">CAPSTONE NAVIGATION</span>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="nav-link active" data-page="dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-link" data-page="monitoring">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>Driver Monitoring</span>
+            <span class="nav-badge" id="hud-nav-badge">Live</span>
+          </button>
+          <button class="nav-link" data-page="history">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Detection History</span>
+          </button>
+          <button class="nav-link" data-page="reports">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Reports & Trends</span>
+          </button>
+          <button class="nav-link" data-page="ai-assistant">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Safety AI Assistant</span>
+          </button>
+          <button class="nav-link" data-page="model-info">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Model Information</span>
+          </button>
+          <button class="nav-link" data-page="settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="academic-note">
+            <strong>College Capstone</strong>
+            <p>OpenCV + Keras CNN Architecture</p>
+          </div>
+          <button id="btn-logout-sidebar" class="btn btn-outline-danger btn-block">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT VIEWPORTS -->
+      <main class="content-area">
+
+        <!-- 1. LOGIN PAGE -->
+        <section id="page-login" class="page-section">
+          <div class="login-wrapper">
+            <div class="login-hero-card">
+              <div class="hero-badge">FINAL-YEAR ENGINEERING PROJECT</div>
+              <h2>Real-Time Driver Fatigue Detection System</h2>
+              <p>Computer vision monitoring for facial drowsiness markers (EAR, MAR, micro-sleep detection) powered by OpenCV & Keras/TensorFlow architectures.</p>
+              <div class="hero-features">
+                <div class="feature-item">✓ Live WebCam Face & Eye Aspect Ratio Tracking</div>
+                <div class="feature-item">✓ Real-time Yawn and Blink Rate Classification</div>
+                <div class="feature-item">✓ Multi-modal Siren Alert & Assistive Telemetry</div>
+              </div>
+            </div>
+
+            <div class="auth-card">
+              <div class="auth-header">
+                <h3 id="auth-title">Driver Authentication</h3>
+                <p id="auth-subtitle">Sign in to initialize drowsiness telemetry sensors</p>
+              </div>
+
+              <!-- Quick Demo Fill -->
+              <button id="btn-quick-demo" class="btn btn-outline-primary btn-block">
+                ⚡ Use Demo Credentials (driver@college.edu)
+              </button>
+
+              <form id="auth-form" class="auth-form" novalidate>
+                <div class="form-group" id="group-name" style="display: none;">
+                  <label for="input-name">Full Driver Name / Student ID</label>
+                  <input type="text" id="input-name" placeholder="e.g. Alex Rivera (TN-2026)" class="form-control">
+                  <span class="error-msg" id="err-name"></span>
+                </div>
+
+                <div class="form-group">
+                  <label for="input-email">Email Address</label>
+                  <input type="email" id="input-email" value="driver@college.edu" placeholder="driver@college.edu" class="form-control" required>
+                  <span class="error-msg" id="err-email"></span>
+                </div>
+
+                <div class="form-group">
+                  <label for="input-password">Password</label>
+                  <input type="password" id="input-password" value="driver123" placeholder="••••••••" class="form-control" required>
+                  <span class="error-msg" id="err-password"></span>
+                </div>
+
+                <div class="form-options">
+                  <a href="#" id="link-forgot-pass">Forgot Password?</a>
+                </div>
+
+                <button type="submit" id="btn-auth-submit" class="btn btn-primary btn-block btn-large">
+                  Login to Dashboard
+                </button>
+              </form>
+
+              <div class="auth-switch">
+                <span id="auth-switch-text">New Driver?</span>
+                <button id="btn-toggle-auth-mode" class="btn-link">Create Account</button>
+              </div>
+
+              <div class="login-safety-disclaimer">
+                ⚠️ Assistive Academic Tool: System demonstrates computer vision algorithms and is not an automotive certified autopilot device.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. DASHBOARD PAGE -->
+        <section id="page-dashboard" class="page-section active">
+          <div class="section-header">
+            <div>
+              <h2>Executive Dashboard</h2>
+              <p class="text-muted">Real-time driver vigilance telemetry and physiological metrics</p>
+            </div>
+            <button class="btn btn-primary" id="btn-goto-monitoring">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <span>Launch Live Camera HUD</span>
+            </button>
+          </div>
+
+          <!-- 4 Core Metric Cards -->
+          <div class="grid grid-4">
+            <div class="card metric-card">
+              <div class="metric-top">
+                <span class="metric-label">FATIGUE STATUS</span>
+                <span class="status-indicator status-ok" id="card-fatigue-badge">Normal</span>
+              </div>
+              <div class="metric-value" id="card-fatigue-val">Alert / Safe</div>
+              <div class="metric-sub" id="card-fatigue-sub">Physiological Baseline Normal</div>
+              <div class="progress-track"><div class="progress-bar bar-safe" id="prog-fatigue" style="width: 20%;"></div></div>
+            </div>
+
+            <div class="card metric-card">
+              <div class="metric-top">
+                <span class="metric-label">EYE STATUS & EAR</span>
+                <span class="metric-icon">👁️</span>
+              </div>
+              <div class="metric-value" id="card-eye-val">Eyes Open</div>
+              <div class="metric-sub" id="card-eye-sub">EAR: 0.33 | Closure: 0.0s</div>
+              <div class="progress-track"><div class="progress-bar bar-primary" id="prog-ear" style="width: 82%;"></div></div>
+            </div>
+
+            <div class="card metric-card">
+              <div class="metric-top">
+                <span class="metric-label">MOUTH & YAWN</span>
+                <span class="metric-icon">🗣️</span>
+              </div>
+              <div class="metric-value" id="card-mouth-val">Normal</div>
+              <div class="metric-sub" id="card-mouth-sub">MAR: 0.38 | Blinks: 18/m</div>
+              <div class="progress-track"><div class="progress-bar bar-primary" id="prog-mar" style="width: 45%;"></div></div>
+            </div>
+
+            <div class="card metric-card">
+              <div class="metric-top">
+                <span class="metric-label">DETECTION CONFIDENCE</span>
+                <span class="metric-icon">⚡</span>
+              </div>
+              <div class="metric-value" id="card-confidence-val">97.4%</div>
+              <div class="metric-sub">Keras Convolutional Classifier</div>
+              <div class="progress-track"><div class="progress-bar bar-primary" style="width: 97%;"></div></div>
+            </div>
+          </div>
+
+          <!-- Chronometer and Session Status -->
+          <div class="grid grid-2 mt-4">
+            <div class="card session-card">
+              <div class="session-left">
+                <div class="timer-icon">⏱️</div>
+                <div>
+                  <span class="metric-label">TOTAL MONITORING DURATION</span>
+                  <div class="session-timer" id="dashboard-timer">00:00:00</div>
+                  <span class="text-muted" id="active-scenario-label">Current Mode: Normal Driving Simulation</span>
+                </div>
+              </div>
+              <div class="session-right">
+                <span class="status-pill status-standby" id="dash-monitoring-status">MONITORING STANDBY</span>
+              </div>
+            </div>
+
+            <div class="card alert-summary-card">
+              <div class="metric-top">
+                <span class="metric-label">SIREN & VIBRATION STATUS</span>
+                <span class="metric-icon">🔔</span>
+              </div>
+              <div class="alert-status-text" id="dash-siren-status">ALL CLEAR – NO HAZARD</div>
+              <p class="text-muted">Multi-frequency alert siren armed. Emergency haptic pulse enabled.</p>
+            </div>
+          </div>
+
+          <!-- Recent Incidents Table Card -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <h3>Recent Detection Incidents</h3>
+              <button class="btn btn-outline btn-sm" id="btn-dash-view-all-history">View Complete Log</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Fatigue Status</th>
+                    <th>Eye State</th>
+                    <th>Mouth/Yawn</th>
+                    <th>EAR / MAR</th>
+                    <th>Alarm</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-recent-tbody">
+                  <!-- Injected by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Academic Capstone Information Banner -->
+          <div class="card academic-banner-card mt-4">
+            <div class="banner-badge">ACADEMIC CAPSTONE ARCHITECTURE</div>
+            <h4>College Final-Year Project Overview</h4>
+            <p>This application implements an end-to-end edge AI pipeline utilizing OpenCV for image frame extraction, Haar cascade and landmark geometry for EAR/MAR calculations, and a pre-trained Keras MobileNetV2 architecture for multi-class fatigue classification. The project demonstrates low-latency driver safety telemetry.</p>
+          </div>
+        </section>
+
+        <!-- 3. REAL-TIME DRIVER MONITORING PAGE -->
+        <section id="page-monitoring" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>Real-Time Driver Monitoring</h2>
+              <p class="text-muted">Live camera frame processing and facial landmark fatigue HUD</p>
+            </div>
+            <div class="hud-controls-top">
+              <span class="status-pill status-standby" id="hud-status-pill">CAMERA OFF</span>
+            </div>
+          </div>
+
+          <!-- HUD Container -->
+          <div class="hud-layout">
+            <!-- Left: Video Canvas Feed -->
+            <div class="hud-feed-card card">
+              <div class="camera-viewport" id="camera-viewport">
+                <!-- Real Webcam Video Element -->
+                <video id="webcam-video" autoplay playsinline muted class="hidden"></video>
+                
+                <!-- HUD Canvas Overlay for Bounding Box & Telemetry -->
+                <canvas id="hud-canvas" width="640" height="420"></canvas>
+
+                <!-- Camera Off Fallback Placeholder -->
+                <div id="camera-placeholder" class="camera-placeholder">
+                  <div class="cam-icon">📹</div>
+                  <h4>Camera is Currently Standby</h4>
+                  <p>Click "Start Camera" below to stream your live webcam feed or use the Simulation Scenarios to evaluate fatigue detection.</p>
+                </div>
+
+                <!-- Live HUD Badge Overlays -->
+                <div class="hud-overlay-topleft">
+                  <div class="hud-stat" id="hud-ear-stat">EAR: 0.32 (Open)</div>
+                  <div class="hud-stat" id="hud-mar-stat">MAR: 0.38 (Normal)</div>
+                  <div class="hud-stat" id="hud-conf-stat">Conf: 97.4%</div>
+                </div>
+
+                <div class="hud-overlay-bottom">
+                  <span id="hud-warning-text">Driver Vigilance: Normal & Active</span>
+                </div>
+              </div>
+
+              <!-- Camera Controls Bar -->
+              <div class="camera-action-bar">
+                <button id="btn-toggle-camera" class="btn btn-outline-primary">
+                  <span id="cam-btn-icon">📹</span>
+                  <span id="cam-btn-text">Start Camera</span>
+                </button>
+
+                <button id="btn-toggle-detection" class="btn btn-primary">
+                  <span id="det-btn-icon">▶</span>
+                  <span id="det-btn-text">Start Detection</span>
+                </button>
+
+                <button id="btn-test-siren" class="btn btn-outline">
+                  <span>🔊 Test Alarm Siren</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right: Physiological Telemetry & Simulation Controls -->
+            <div class="hud-sidebar">
+              <!-- Live Metrics Panel -->
+              <div class="card">
+                <div class="card-header">
+                  <h4>Live Physiological Metrics</h4>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-row-label">Eye State</span>
+                  <span class="badge badge-safe" id="hud-eye-badge">Eyes Open</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-row-label">Closure Duration</span>
+                  <span class="metric-row-val" id="hud-closure-dur">0.0 s</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-row-label">Mouth State</span>
+                  <span class="badge badge-safe" id="hud-mouth-badge">Normal</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-row-label">Blink Frequency</span>
+                  <span class="metric-row-val" id="hud-blink-rate">18 blinks/min</span>
+                </div>
+                <div class="metric-row">
+                  <span class="metric-row-label">Fatigue Threat Level</span>
+                  <span class="badge badge-safe" id="hud-fatigue-level-badge">Normal (0%)</span>
+                </div>
+              </div>
+
+              <!-- Simulation Scenario Switcher -->
+              <div class="card mt-3">
+                <div class="card-header">
+                  <h4>Evaluation Scenarios</h4>
+                  <span class="badge badge-warning">Demo Tool</span>
+                </div>
+                <p class="text-muted small">Select a physiological condition to verify system triggers during project demonstration:</p>
+                
+                <div class="scenario-list">
+                  <button class="btn scenario-btn active" data-scenario="normal">
+                    <strong>1. Normal Driving</strong>
+                    <span>Eyes open, relaxed jaw, normal blinking</span>
+                  </button>
+                  <button class="btn scenario-btn" data-scenario="microsleep">
+                    <strong>2. Micro-Sleep (Eyes Closed)</strong>
+                    <span>Prolonged eye closure (>1.5s) triggers ALARM</span>
+                  </button>
+                  <button class="btn scenario-btn" data-scenario="yawning">
+                    <strong>3. Yawning Episode</strong>
+                    <span>Mouth opens wide (MAR > 0.65) for 3s</span>
+                  </button>
+                  <button class="btn scenario-btn" data-scenario="gradual">
+                    <strong>4. Gradual Drowsiness</strong>
+                    <span>Heavy eyelids, slow eyelid reopening, fluctuating fatigue</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. DETECTION HISTORY PAGE -->
+        <section id="page-history" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>Detection History & Audit Log</h2>
+              <p class="text-muted">Comprehensive record of all logged driver alertness events</p>
+            </div>
+            <div class="history-actions">
+              <button id="btn-clear-history" class="btn btn-outline-danger">Clear All Records</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="table-filters">
+              <div class="search-box">
+                <input type="text" id="history-search" placeholder="Search by date, time, status, or note..." class="form-control">
+              </div>
+              <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Events (<span id="count-all">0</span>)</button>
+                <button class="filter-btn" data-filter="alert">Alerts Only (<span id="count-alerts">0</span>)</button>
+                <button class="filter-btn" data-filter="normal">Normal Only (<span id="count-normal">0</span>)</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Fatigue Classification</th>
+                    <th>Eye Status</th>
+                    <th>Mouth / Yawn</th>
+                    <th>EAR</th>
+                    <th>MAR</th>
+                    <th>Confidence</th>
+                    <th>Alarm</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="history-full-tbody">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. REPORTS & TRENDS PAGE -->
+        <section id="page-reports" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>Reports & Fatigue Analytics</h2>
+              <p class="text-muted">Statistical trends and downloadable capstone project audit report</p>
+            </div>
+            <button id="btn-export-report" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Generate & Download Report</span>
+            </button>
+          </div>
+
+          <div class="grid grid-4">
+            <div class="card metric-card">
+              <span class="metric-label">TOTAL SESSIONS</span>
+              <div class="metric-value" id="rep-total-sessions">0</div>
+              <div class="metric-sub">Logged Monitoring Drives</div>
+            </div>
+            <div class="card metric-card">
+              <span class="metric-label">FATIGUE EVENTS</span>
+              <div class="metric-value text-danger" id="rep-fatigue-events">0</div>
+              <div class="metric-sub">Critical Siren Alarms</div>
+            </div>
+            <div class="card metric-card">
+              <span class="metric-label">NORMAL EVENTS</span>
+              <div class="metric-value text-safe" id="rep-normal-events">0</div>
+              <div class="metric-sub">Alert Vigilance Runs</div>
+            </div>
+            <div class="card metric-card">
+              <span class="metric-label">AVERAGE DURATION</span>
+              <div class="metric-value" id="rep-avg-duration">38m</div>
+              <div class="metric-sub">Per Driving Session</div>
+            </div>
+          </div>
+
+          <!-- Visual Bar Chart -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <h3>7-Day Fatigue Detection Trend</h3>
+              <span class="text-muted small">Daily logged drowsiness occurrences</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="trend-chart" height="160"></canvas>
+            </div>
+          </div>
+
+          <!-- Diurnal Time-of-Day Risk Breakdown -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <h3>Diurnal Fatigue Risk Breakdown</h3>
+            </div>
+            <div class="diurnal-list">
+              <div class="diurnal-item">
+                <span class="diurnal-time">Morning (06:00 - 12:00)</span>
+                <span class="diurnal-risk badge badge-safe">Low Risk (8%)</span>
+              </div>
+              <div class="diurnal-item">
+                <span class="diurnal-time">Afternoon (12:00 - 18:00)</span>
+                <span class="diurnal-risk badge badge-warning">Moderate Dip (24%)</span>
+              </div>
+              <div class="diurnal-item">
+                <span class="diurnal-time">Evening (18:00 - 22:00)</span>
+                <span class="diurnal-risk badge badge-warning">Elevated (28%)</span>
+              </div>
+              <div class="diurnal-item">
+                <span class="diurnal-time">Night / Micro-sleep (22:00 - 06:00)</span>
+                <span class="diurnal-risk badge badge-danger">High Risk (40%)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. SAFETY AI ASSISTANT PAGE -->
+        <section id="page-ai-assistant" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>Driver Safety AI Assistant</h2>
+              <p class="text-muted">Educational Q&A on fatigue symptoms, computer vision, and Keras deep learning</p>
+            </div>
+          </div>
+
+          <div class="ai-assistant-wrapper">
+            <!-- Quick Chips -->
+            <div class="chips-container">
+              <span class="chips-label">SUGGESTED VIVA & PROJECT QUESTIONS:</span>
+              <div class="chips-scroll">
+                <button class="chip-btn" data-question="What is driver fatigue?">What is driver fatigue?</button>
+                <button class="chip-btn" data-question="What are the symptoms of fatigue?">What are the symptoms of fatigue?</button>
+                <button class="chip-btn" data-question="Why do closed eyes indicate fatigue?">Why do closed eyes indicate fatigue?</button>
+                <button class="chip-btn" data-question="What is yawning detection?">What is yawning detection?</button>
+                <button class="chip-btn" data-question="How does OpenCV help this project?">How does OpenCV help this project?</button>
+                <button class="chip-btn" data-question="What is Keras?">What is Keras?</button>
+                <button class="chip-btn" data-question="How does the fatigue detection model work?">How does the fatigue detection model work?</button>
+                <button class="chip-btn" data-question="What should a driver do when fatigue is detected?">What should a driver do when fatigue is detected?</button>
+              </div>
+            </div>
+
+            <!-- Chat Window -->
+            <div class="card chat-card">
+              <div class="chat-messages" id="chat-messages-box">
+                <div class="message-bubble assistant">
+                  <div class="msg-sender">Driver Safety AI Assistant</div>
+                  <div class="msg-text">Hello! I am your Driver Safety AI Assistant for the <strong>Real-Time Driver Fatigue Detection</strong> project. Ask me any question regarding driver drowsiness symptoms, OpenCV computer vision processing, Keras neural network models, or road safety protocols.</div>
+                </div>
+              </div>
+
+              <!-- Input Area -->
+              <div class="chat-input-bar">
+                <input type="text" id="chat-input" placeholder="Type a question about driver fatigue, OpenCV, Keras..." class="form-control">
+                <button id="btn-send-chat" class="btn btn-primary">Send</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. MODEL INFORMATION PAGE -->
+        <section id="page-model-info" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>Machine Learning & Computer Vision Specifications</h2>
+              <p class="text-muted">Technical pipeline breakdown: OpenCV frame processing + Keras CNN model</p>
+            </div>
+            <span class="badge badge-safe">Academic Architecture</span>
+          </div>
+
+          <!-- Specs Table -->
+          <div class="card">
+            <h3>Core Model Attributes</h3>
+            <table class="specs-table">
+              <tr>
+                <td>Model Name</td>
+                <td><strong>MobileNetV2-FatigueNet / CNN Multi-Task Classifier</strong></td>
+              </tr>
+              <tr>
+                <td>Purpose</td>
+                <td>Real-time, non-intrusive driver drowsiness and fatigue classification</td>
+              </tr>
+              <tr>
+                <td>Input Format</td>
+                <td>224x224 RGB Frame / 68-Point Facial Landmark Coordinates</td>
+              </tr>
+              <tr>
+                <td>Outputs</td>
+                <td>Multi-class softmax probability: [Alert / Open Eyes, Drowsy / Closed Eyes, Yawning]</td>
+              </tr>
+              <tr>
+                <td>Continuous Metrics</td>
+                <td>EAR (Eye Aspect Ratio), MAR (Mouth Aspect Ratio), Blink Frequency</td>
+              </tr>
+              <tr>
+                <td>Inference Latency</td>
+                <td>~18ms - 32ms per frame on mobile/edge neural hardware</td>
+              </tr>
+              <tr>
+                <td>Model Status</td>
+                <td><span class="badge badge-safe">Active / Deployed Inference Engine</span></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- OpenCV vs Keras Roles -->
+          <div class="grid grid-2 mt-4">
+            <div class="card">
+              <div class="role-header">
+                <span class="role-icon">👁️</span>
+                <h4>OpenCV (Computer Vision Role)</h4>
+              </div>
+              <ul class="role-list">
+                <li><strong>Video Frame Capture:</strong> Obtains continuous live video stream from vehicle cabin camera.</li>
+                <li><strong>Image Preprocessing:</strong> Performs grayscale conversion and CLAHE (Contrast Limited Adaptive Histogram Equalization) to handle nighttime illumination.</li>
+                <li><strong>Facial ROI Extraction:</strong> Utilizes Haar Cascade Classifiers / DNN face detector to localize face bounding box.</li>
+                <li><strong>Geometric Metrics:</strong> Calculates Euclidean landmark distances for EAR and MAR formulas.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div class="role-header">
+                <span class="role-icon">🧠</span>
+                <h4>Keras & TensorFlow (Deep Learning Role)</h4>
+              </div>
+              <ul class="role-list">
+                <li><strong>Convolutional Architecture:</strong> MobileNetV2 with depthwise separable convolutions optimized for edge latency.</li>
+                <li><strong>Texture Learning:</strong> Detects micro-closure textures, eyelid drooping patterns, and spectacles glare invariance.</li>
+                <li><strong>Dataset Training:</strong> Fine-tuned on academic datasets including MRL Eye Dataset (37,000+ images) and YawDD.</li>
+                <li><strong>Confidence Scoring:</strong> Computes softmax probability distributions to filter out driver speech vs biological yawning.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Mathematical Formulas Card -->
+          <div class="card mt-4">
+            <h3>Mathematical Formulations (EAR & MAR)</h3>
+            <div class="formula-box">
+              <div class="formula-title">1. Eye Aspect Ratio (EAR) - Soukupová & Čech:</div>
+              <code>EAR = ( ||p2 - p6|| + ||p3 - p5|| ) / ( 2 * ||p1 - p4|| )</code>
+              <p class="formula-desc">Where p1...p6 represent 2D eyelid landmark coordinates. EAR drops below 0.22 during eye closure. Sustained closure > 1.5s triggers micro-sleep alarm.</p>
+            </div>
+
+            <div class="formula-box mt-3">
+              <div class="formula-title">2. Mouth Aspect Ratio (MAR) - Yawn Geometric Metric:</div>
+              <code>MAR = ( ||m2 - m8|| + ||m3 - m7|| + ||m4 - m6|| ) / ( 2 * ||m1 - m5|| )</code>
+              <p class="formula-desc">Where m1...m8 represent lip boundary landmarks. MAR exceeds 0.65 for sustained duration (>2.5s) during involuntary fatigue yawning.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. SETTINGS PAGE -->
+        <section id="page-settings" class="page-section">
+          <div class="section-header">
+            <div>
+              <h2>System Settings & Driver Profile</h2>
+              <p class="text-muted">Configure sensitivity, alarm channels, and capstone metadata</p>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <!-- Driver Profile Form -->
+            <div class="card">
+              <h3>Driver & Capstone Profile</h3>
+              <form id="profile-form">
+                <div class="form-group">
+                  <label for="prof-name">Driver / Student Name</label>
+                  <input type="text" id="prof-name" value="Scholar Driver" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="prof-email">Email Address</label>
+                  <input type="email" id="prof-email" value="driver@college.edu" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="prof-vehicle">Vehicle / Cabin ID</label>
+                  <input type="text" id="prof-vehicle" value="TN-09-EV-2026" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="prof-team">Project Team Members</label>
+                  <input type="text" id="prof-team" value="Engineering Capstone Team" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Profile Details</button>
+              </form>
+            </div>
+
+            <!-- Calibration & Alarms -->
+            <div class="card">
+              <h3>Detection Sensitivity & Alarms</h3>
+
+              <div class="setting-row">
+                <div>
+                  <strong>Audible Siren Alarm</strong>
+                  <p class="text-muted small">Play high-frequency audio alert upon critical drowsiness</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="set-sound" checked>
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div>
+                  <strong>Device Haptic Vibration</strong>
+                  <p class="text-muted small">Pulse mobile/tablet vibration upon drowsiness</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="set-vibrate" checked>
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div>
+                  <strong>Safe Demo Simulation Mode</strong>
+                  <p class="text-muted small">Enable controlled facial simulation for college project testing</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="set-demo" checked>
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="set-closure-time">Eye Closure Delay Threshold: <span id="val-closure-time">1.5s</span></label>
+                <input type="range" id="set-closure-time" min="0.8" max="3.0" step="0.1" value="1.5" class="range-slider">
+              </div>
+
+              <div class="form-group">
+                <label for="set-ear-thresh">EAR Threshold: <span id="val-ear-thresh">0.22</span></label>
+                <input type="range" id="set-ear-thresh" min="0.15" max="0.30" step="0.01" value="0.22" class="range-slider">
+              </div>
+
+              <div class="form-group">
+                <label for="set-mar-thresh">MAR Yawn Threshold: <span id="val-mar-thresh">0.65</span></label>
+                <input type="range" id="set-mar-thresh" min="0.50" max="0.85" step="0.01" value="0.65" class="range-slider">
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- REPORT EXPORT MODAL -->
+    <div id="export-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Generated Capstone Project Report</h3>
+          <button class="modal-close" id="btn-close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <pre id="report-text-preview" class="code-preview"></pre>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-copy-report" class="btn btn-outline-primary">Copy to Clipboard</button>
+          <button id="btn-download-txt" class="btn btn-primary">Download .TXT File</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

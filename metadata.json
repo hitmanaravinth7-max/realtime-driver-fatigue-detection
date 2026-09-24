@@ -1,0 +1,6 @@
+{
+  "name": "Driver Fatigue Guard",
+  "description": "Real-Time Driver Fatigue Detection system using computer vision principles, face/eye/mouth fatigue analysis, real-time alert system, driver reports, and safety AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
